@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新入荷商品 | 秋月電子通商ビューア(非公式)</title>
+<style>
+:root {
+  --red:    #cc0000;
+  --red-dk: #990000;
+  --off:    #f4f4f4;
+  --border: #cccccc;
+  --text:   #222222;
+  --muted:  #666666;
+  --link:   #0033cc;
+  --green:  #007700;
+  --amber:  #cc7700;
+  --blue:   #3949ab;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Meiryo","メイリオ","MS PGothic",sans-serif;font-size:13px;
+     background:var(--off);color:var(--text);min-height:100vh}
+
+/* ===== ヘッダー ===== */
+header{background:var(--red);border-bottom:3px solid var(--red-dk)}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;
+          padding:8px 16px;max-width:1200px;margin:0 auto;gap:12px;flex-wrap:wrap}
+.site-title{color:#fff;font-size:19px;font-weight:bold;text-decoration:none;line-height:1.2}
+.site-title span{font-size:10px;font-weight:normal;letter-spacing:.1em;display:block}
+.subnav{background:var(--red-dk);padding:4px 16px;font-size:11px;text-align:center}
+.subnav a{color:#ffdddd;text-decoration:none;margin:0 7px}
+.subnav a:hover{color:#fff;text-decoration:underline}
+
+/* ===== タブ ===== */
+.tabs-wrap{background:#fff;border-bottom:2px solid var(--red);
+           max-width:1200px;margin:12px auto 0;padding:0 16px}
+.tabs{display:flex}
+.tab{padding:8px 20px;font-size:13px;font-weight:bold;cursor:pointer;
+     border:1px solid var(--border);border-bottom:none;background:#f0f0f0;
+     color:var(--muted);margin-right:3px;user-select:none;transition:background .15s}
+.tab.active{background:#fff;color:var(--red);border-bottom:2px solid #fff;margin-bottom:-2px}
+.tab:hover:not(.active){background:#ffe8e8;color:var(--red)}
+
+/* ===== コンテナ ===== */
+.container{max-width:1200px;margin:0 auto;padding:12px 16px}
+.pane{display:none}.pane.active{display:block}
+
+/* ===== ステータスバー ===== */
+.status-bar{background:#fff;border:1px solid var(--border);padding:7px 12px;
+            margin-bottom:10px;display:flex;align-items:center;
+            justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:12px}
+.status-info{color:var(--muted)}
+.status-info strong{color:var(--red)}
+.btn-red{background:var(--red);color:#fff;border:none;padding:5px 14px;
+         font-size:12px;cursor:pointer;font-family:inherit;font-weight:bold}
+.btn-red:hover{background:var(--red-dk)}
+.btn-red:disabled{background:#aaa;cursor:wait}
+
+/* ===== メッセージバー ===== */
+.err-bar{background:#fdecea;border:1px solid #f5c6cb;color:#721c24;
+         padding:9px 12px;margin-bottom:10px;font-size:12px;display:none}
+
+/* ===== 商品グリッド ===== */
+.products-grid{display:grid;
+               grid-template-columns:repeat(auto-fill,minmax(195px,1fr));
+               gap:1px;background:var(--border);border:1px solid var(--border)}
+
+/* ===== 商品カード ===== */
+.product-card{background:#fff;padding:10px;display:flex;flex-direction:column;
+              gap:4px;position:relative;transition:background .15s}
+.product-card:hover{background:#fff8f8}
+.new-badge{position:absolute;top:8px;right:8px;background:var(--red);color:#fff;
+           font-size:9px;font-weight:bold;padding:1px 5px;z-index:1}
+
+/* ===== 商品画像 ===== */
+.img-wrap{width:100%;aspect-ratio:1;background:#f8f8f8;border:1px solid #e8e8e8;
+          display:flex;align-items:center;justify-content:center;
+          overflow:hidden;margin-bottom:4px;text-decoration:none;position:relative}
+.img-wrap img{max-width:100%;max-height:100%;object-fit:contain;
+              opacity:0;transition:opacity .3s;position:absolute}
+.img-wrap img.show{opacity:1}
+.img-fallback{display:flex;flex-direction:column;align-items:center;gap:4px;
+              color:#bbb;font-size:30px}
+.img-fallback small{font-size:10px;color:#ccc}
+.img-wrap.has-img .img-fallback{display:none}
+
+.product-code{font-size:10px;color:var(--muted);font-family:monospace}
+.product-name{font-size:12px;font-weight:bold;color:var(--link);line-height:1.4;
+              text-decoration:none;display:block}
+.product-name:hover{text-decoration:underline;color:var(--red)}
+.product-model{font-size:10px;color:#888;font-family:monospace}
+.product-footer{display:flex;align-items:flex-end;justify-content:space-between;
+                margin-top:auto;padding-top:6px;border-top:1px dotted var(--border)}
+.product-price{font-size:15px;font-weight:bold;color:var(--red)}
+.product-price .unit{font-size:10px;color:var(--muted);font-weight:normal}
+.stock-badge{font-size:10px;font-weight:bold;padding:2px 6px;white-space:nowrap}
+.s-ok  {background:#e8f5e8;color:var(--green);border:1px solid #aaddaa}
+.s-few {background:#fff3e0;color:var(--amber);border:1px solid #ffcc77}
+.s-none{background:#fdecea;color:var(--red);  border:1px solid #ffaaaa}
+.s-soon{background:#e8eaf6;color:var(--blue); border:1px solid #9fa8da}
+
+/* 購入ボタン */
+.btn-purchase{width:100%;margin-top:6px;background:#f5f5f5;color:var(--text);
+              border:1px solid var(--border);padding:5px;font-size:11px;
+              cursor:pointer;font-family:inherit;transition:all .15s;font-weight:bold}
+.btn-purchase:hover{background:#ffe0e0;border-color:var(--red);color:var(--red)}
+.btn-purchase.owned{background:#e8f5e8;color:var(--green);border-color:#aaddaa}
+
+/* ===== スケルトン ===== */
+.skeleton{animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.skel{background:#e0e0e0;border-radius:2px;margin:4px 0}
+
+/* ===== 購入管理 ===== */
+.mgmt-bar{display:flex;justify-content:space-between;align-items:center;
+          margin-bottom:10px;flex-wrap:wrap;gap:8px}
+.mgmt-bar h2{font-size:14px;color:var(--red);font-weight:bold}
+.btn-csv{background:#fff;color:var(--text);border:1px solid var(--border);
+         padding:5px 12px;font-size:11px;cursor:pointer;font-family:inherit}
+.btn-csv:hover{border-color:var(--red);color:var(--red)}
+
+.purchase-table{width:100%;border-collapse:collapse;background:#fff;font-size:12px}
+.purchase-table th{background:var(--red);color:#fff;padding:7px 10px;
+                   text-align:left;font-weight:bold;font-size:11px;white-space:nowrap}
+.purchase-table td{padding:7px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+.purchase-table tr:hover td{background:#fff8f8}
+.purchase-table .c-code{font-family:monospace;color:var(--muted)}
+.purchase-table .c-num {text-align:right;white-space:nowrap}
+.purchase-table .c-red {color:var(--red);font-weight:bold;text-align:right;white-space:nowrap}
+.del-btn{background:none;border:1px solid #ddd;color:#999;padding:2px 8px;
+         cursor:pointer;font-size:11px;font-family:inherit}
+.del-btn:hover{border-color:var(--red);color:var(--red);background:#fff0f0}
+.no-data{text-align:center;padding:40px;color:var(--muted);background:#fff;
+         border:1px solid var(--border)}
+.total-bar{background:#fff;border:1px solid var(--border);border-top:2px solid var(--red);
+           padding:10px 14px;display:flex;justify-content:flex-end;
+           align-items:center;gap:16px;font-size:13px}
+.total-bar strong{color:var(--red);font-size:17px}
+
+/* ===== フィルター ===== */
+.filter-bar{background:#fff;border:1px solid var(--border);padding:8px 12px;
+            margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px}
+.filter-bar label{color:var(--muted);font-weight:bold}
+.filter-bar input,.filter-bar select{border:1px solid var(--border);padding:4px 7px;
+  font-size:12px;font-family:inherit;outline:none}
+.filter-bar input:focus,.filter-bar select:focus{border-color:var(--red)}
+
+/* ===== モーダル ===== */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);
+          z-index:1000;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:#fff;width:420px;max-width:96vw;border-top:4px solid var(--red)}
+.modal-head{background:var(--red);color:#fff;padding:8px 14px;font-weight:bold;
+            font-size:13px;display:flex;justify-content:space-between;align-items:center}
+.modal-close{background:none;border:none;color:#fff;font-size:20px;
+             cursor:pointer;line-height:1;padding:0 2px}
+.modal-body{padding:16px}
+.form-row{margin-bottom:12px}
+.form-row label{display:block;font-size:11px;color:var(--muted);margin-bottom:3px;font-weight:bold}
+.form-row input,.form-row textarea{width:100%;border:1px solid var(--border);
+  padding:6px 8px;font-size:13px;font-family:inherit;outline:none}
+.form-row input:focus,.form-row textarea:focus{border-color:var(--red)}
+.form-row input[readonly]{background:#f8f8f8}
+.form-row textarea{resize:vertical;height:64px}
+.modal-footer{padding:12px 16px;border-top:1px solid var(--border);
+              display:flex;justify-content:flex-end;gap:8px}
+.btn-gray{background:#f0f0f0;color:var(--text);border:1px solid var(--border);
+          padding:6px 16px;cursor:pointer;font-family:inherit;font-size:12px}
+.btn-gray:hover{background:#e0e0e0}
+
+/* ===== フッター ===== */
+footer{background:var(--red-dk);color:#ffaaaa;text-align:center;
+       font-size:11px;padding:12px;margin-top:24px}
+footer a{color:#ffcccc}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-top">
+    <a class="site-title" href="https://akizukidenshi.com/catalog/" target="_blank" rel="noopener">
+      秋月電子通商
+      <span>AKIZUKI DENSHI TSUSHO — 新入荷ビューアー</span>
+    </a>
+    <span style="color:#ffeeee;font-size:11px" id="save-indicator"></span>
+  </div>
+  <div class="subnav">
+    <a href="https://akizukidenshi.com/catalog/" target="_blank" rel="noopener">トップページ(秋月公式ページに飛びます)</a>
+    <a href="https://akizukidenshi.com/catalog/e/enewall_dT/" target="_blank" rel="noopener">新商品一覧（公式）</a>
+    <a href="https://akizukidenshi.com/catalog/goods/search.aspx" target="_blank" rel="noopener">詳細検索</a>
+    <a href="https://akizukidenshi.com/catalog/pages/news.aspx" target="_blank" rel="noopener">お知らせ</a>
+  </div>
+</header>
+
+<div class="tabs-wrap">
+  <div class="tabs">
+    <div class="tab active" data-tab="new"     onclick="switchTab('new')">🆕 新規入荷製品(10件のみ表示)</div>
+    <div class="tab"        data-tab="mgmt"    onclick="switchTab('mgmt')">📦 購入管理 <span id="mgmt-count"></span></div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ======== 新入荷ペイン ======== -->
+  <div class="pane active" id="pane-new">
+    <div class="status-bar">
+      <div class="status-info" id="status-info">取得中...</div>
+      <button class="btn-red" id="refresh-btn" onclick="fetchProducts()">↺ 最新情報を取得</button>
+    </div>
+    <div class="err-bar" id="err-bar"></div>
+    <div class="products-grid" id="products-grid"></div>
+  </div>
+
+  <!-- ======== 購入管理ペイン ======== -->
+  <div class="pane" id="pane-mgmt">
+
+    <div class="mgmt-bar">
+      <h2>📦 購入記録</h2>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn-csv" onclick="exportCSV()">📥 CSVエクスポート(CSV形式で購入記録を出力)</button>
+        <button class="btn-red" onclick="openAddManual()">＋ 手動で追加(現在、秋月アカウントから自動取得できるように改良中)</button>
+      </div>
+    </div>
+
+    <!-- 絞り込み -->
+    <div class="filter-bar">
+      <label>絞り込み:</label>
+      <input type="text" id="filter-keyword" placeholder="商品名・コード・メモ…" oninput="renderTable()" style="width:200px">
+      <label>並び替え:</label>
+      <select id="sort-select" onchange="renderTable()">
+        <option value="date-desc">購入日（新しい順）</option>
+        <option value="date-asc">購入日（古い順）</option>
+        <option value="price-desc">金額（高い順）</option>
+        <option value="price-asc">金額（安い順）</option>
+        <option value="name-asc">商品名（昇順）</option>
+        <option value="name-desc">商品名（降順）</option>
+
+      </select>
+    </div>
+
+    <div id="table-wrap"></div>
+
+  </div>
+</div>
+
+<!-- 購入追加モーダル -->
+<div class="modal-bg" id="modal-bg" onclick="bgClick(event)">
+  <div class="modal">
+    <div class="modal-head">
+      <span id="modal-title">購入記録を追加</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <label>商品名</label>
+        <input type="text" id="m-name" placeholder="例: Raspberry Pi 4 Model B 4GB">
+      </div>
+      <div class="form-row">
+        <label>販売コード <span style="font-weight:normal;color:#aaa">（秋月のコード番号）</span></label>
+        <input type="text" id="m-code" placeholder="例: 114839" maxlength="10" pattern="\d*">
+      </div>
+      <div class="form-row">
+        <label>購入日</label>
+        <input type="date" id="m-date">
+      </div>
+      <div style="display:flex;gap:12px">
+        <div class="form-row" style="flex:1">
+          <label>数量</label>
+          <input type="number" id="m-qty" value="1" min="1" max="9999">
+        </div>
+        <div class="form-row" style="flex:1">
+          <label>単価（円・税込）</label>
+          <input type="number" id="m-price" min="0" placeholder="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <label>メモ <span style="font-weight:normal;color:#aaa">（用途・プロジェクト等）</span></label>
+        <textarea id="m-memo" placeholder="例: ロボットアーム制作用"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-gray" onclick="closeModal()">キャンセル</button>
+      <button class="btn-red" onclick="saveModal()">保存する</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>このサイトは <a href="https://akizukidenshi.com/" target="_blank">秋月電子通商</a> の新入荷情報を表示しています。データはこのデバイスにのみ保存されます。</p>
+  <p style="margin-top:4px">© 2002-2026 秋月電子通商 AKIZUKI DENSHI TSUSHO CO.,LTD.（非公式|このサイトは有志によって開発されました。公式ページは<a href="https://akizukidenshi.com/catalog/" target="_blank" rel="noopener">秋月電子通商</a>
+です）</p>
+</footer>
+
+<script>
+// ================================================================
+//  LocalStorage 購入記録 CRUD
+// ================================================================
+const LS_KEY = "akizuki_purchases_v1";
+
+function loadPurchases() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY) || "[]"); }
+  catch { return []; }
+}
+function savePurchases(list) {
+  localStorage.setItem(LS_KEY, JSON.stringify(list));
+  updateMgmtCount();
+  flashSaved();
+}
+function addPurchase(item) {
+  const list = loadPurchases();
+  item.id = Date.now() + Math.random().toString(36).slice(2,6);
+  list.unshift(item);
+  savePurchases(list);
+}
+function deletePurchase(id) {
+  savePurchases(loadPurchases().filter(p => p.id !== id));
+}
+function ownedCodes() {
+  return new Set(loadPurchases().map(p => p.code).filter(Boolean));
+}
+
+function flashSaved() {
+  const el = document.getElementById("save-indicator");
+  el.textContent = "💾 保存しました";
+  setTimeout(() => el.textContent = "", 2000);
+}
+function updateMgmtCount() {
+  const n = loadPurchases().length;
+  document.getElementById("mgmt-count").textContent = n ? `(${n})` : "";
+}
+
+// ================================================================
+//  タブ切替
+// ================================================================
+function switchTab(id) {
+  document.querySelectorAll(".tab").forEach(t =>
+    t.classList.toggle("active", t.dataset.tab === id));
+  document.querySelectorAll(".pane").forEach(p => p.classList.remove("active"));
+  document.getElementById("pane-" + id).classList.add("active");
+  if (id === "mgmt") renderTable();
+}
+
+// ================================================================
+//  画像ロード（プロキシ経由 Blob 変換）
+// ================================================================
+const IMG_PROXY = "https://api.allorigins.win/raw?url=";
+const IMG_PATTERNS = code => [
+  `https://akizukidenshi.com/img/goods/C/${code}.jpg`,
+  `https://akizukidenshi.com/img/goods/G/${code}.jpg`,
+  `https://akizukidenshi.com/img/goods/L/${code}.jpg`,
+];
+
+function tryImage(imgEl, wrapEl, urls) {
+  if (!urls.length) { wrapEl.classList.remove("has-img"); return; }
+  const [url, ...rest] = urls;
+  fetch(IMG_PROXY + encodeURIComponent(url), { signal: AbortSignal.timeout(6000) })
+    .then(r => {
+      const ct = r.headers.get("content-type") || "";
+      if (!r.ok || ct.startsWith("text") || ct.includes("html")) throw new Error();
+      return r.blob();
+    })
+    .then(blob => {
+      if (blob.size < 800) throw new Error("tiny");
+      imgEl.src = URL.createObjectURL(blob);
+      imgEl.onload  = () => { imgEl.classList.add("show"); wrapEl.classList.add("has-img"); };
+      imgEl.onerror = () => tryImage(imgEl, wrapEl, rest);
+    })
+    .catch(() => tryImage(imgEl, wrapEl, rest));
+}
+
+// ================================================================
+//  スクレイピング
+// ================================================================
+const PROXY      = "https://api.allorigins.win/get?url=";
+const TARGET_URL = "https://akizukidenshi.com/catalog/e/enewall_dT/";
+
+const STATIC = [
+  {code:"132063",model:"SLG47004V",           name:"AnalogPAK SLG47004V",                                price:350,   unit:"1個",     stock:"在庫あり"},
+  {code:"132062",model:"AT25QF128A-SHB",      name:"フラッシュメモリー AT25QF128A-SHB",                 price:480,   unit:"1個",     stock:"在庫あり"},
+  {code:"132061",model:"AT25SF321B-SSHB",     name:"フラッシュメモリー AT25SF321B-SSHB",                price:170,   unit:"1個",     stock:"在庫あり"},
+  {code:"131846",model:"AE-LED1010-X8-DIP16", name:"8回路 白色LEDアレイ モジュールキット",              price:250,   unit:"1個",     stock:"在庫僅少"},
+  {code:"131682",model:"BD64950EFJ-E2",       name:"DCブラシ付モータードライバー(フルブリッジ) 40V耐圧",price:120,   unit:"1個",     stock:"在庫あり"},
+  {code:"132012",model:"BEETLEBIT-NB",        name:"BEETLE:BIT グリッパーロボットカーキット",           price:10800, unit:"1個",     stock:"在庫あり"},
+  {code:"132017",model:"SC2337",              name:"Raspberry Pi 4 Model B 3GB",                         price:17820, unit:"1個",     stock:"在庫あり"},
+  {code:"132045",model:"SC2005",              name:"Raspberry Pi Touch Display 2 (10インチ)",            price:16800, unit:"1セット", stock:"在庫あり"},
+  {code:"131343",model:"HY0020-A0",           name:"FDK製BLEモジュール HY0020 ブートローダー書込済",    price:2000,  unit:"1個",     stock:"在庫あり"},
+  {code:"131978",model:"HP20",                name:"はんだ付け用ミニホットプレート HP20",               price:12400, unit:"1台",     stock:"9月上旬入荷予定"},
+];
+
+async function fetchAndParse() {
+  const r = await fetch(PROXY + encodeURIComponent(TARGET_URL),
+                        { signal: AbortSignal.timeout(9000) });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const doc2 = new DOMParser().parseFromString((await r.json()).contents, "text/html");
+  const results = [], seen = new Set();
+  for (const a of doc2.querySelectorAll('a[href*="/catalog/g/g"]')) {
+    const m = a.href.match(/\/catalog\/g\/g(\d+)\//);
+    if (!m) continue;
+    const code = m[1]; if (seen.has(code)) continue; seen.add(code);
+    const block = a.closest("li") || a.closest("div");
+    if (!block) continue;
+    const text  = block.textContent || "";
+    const name  = a.textContent.trim();
+    if (!name || name.length < 3) continue;
+    const pm    = text.match(/￥([\d,]+)/);
+    const price = pm ? parseInt(pm[1].replace(/,/g, "")) : 0;
+    const um    = text.match(/\d+\s*(個|本|枚|袋|冊|台|セット|パック)/);
+    const unit  = um ? um[0].trim() : "1個";
+    let stock   = "在庫あり";
+    if (text.includes("在庫僅少")) stock = "在庫僅少";
+    if (text.includes("入荷予定")) { const sm = text.match(/\d+月[^\n。]{0,15}入荷予定/); stock = sm ? sm[0] : "入荷予定"; }
+    if (text.includes("販売終了")) stock = "販売終了";
+    const mm = (block.innerHTML || "").match(/型番[：:]\s*([^\s<]{3,40})/);
+    results.push({ code, name, price, unit, stock, model: mm ? mm[1] : "" });
+    if (results.length >= 10) break;
+  }
+  return results;
+}
+
+// ================================================================
+//  ユーティリティ
+// ================================================================
+function fmtPrice(n) { return n ? `¥${Number(n).toLocaleString()}` : "—"; }
+function stockCls(s) {
+  if (!s) return "s-none";
+  if (s.includes("僅少")) return "s-few";
+  if (s.includes("在庫あり")) return "s-ok";
+  if (s.includes("予定")) return "s-soon";
+  return "s-none";
+}
+function stockLabel(s) {
+  if (!s) return "不明";
+  if (s.includes("僅少")) return "在庫僅少";
+  if (s.includes("在庫あり")) return "在庫あり";
+  if (s.includes("予定")) return s.length > 14 ? s.slice(0, 14) + "…" : s;
+  return "在庫切れ";
+}
+
+// ================================================================
+//  スケルトン
+// ================================================================
+function renderSkeleton() {
+  document.getElementById("products-grid").innerHTML = Array(10).fill(`
+    <div class="product-card skeleton">
+      <div class="img-wrap"><div class="skel" style="width:80%;height:80%;margin:auto"></div></div>
+      <div class="skel" style="height:10px;width:55%"></div>
+      <div class="skel" style="height:13px;width:90%"></div>
+      <div class="skel" style="height:10px;width:65%"></div>
+      <div class="product-footer">
+        <div class="skel" style="height:16px;width:70px"></div>
+        <div class="skel" style="height:16px;width:50px"></div>
+      </div>
+      <div class="skel" style="height:28px;width:100%;margin-top:6px"></div>
+    </div>`).join("");
+}
+
+// ================================================================
+//  商品カード生成
+// ================================================================
+let currentItems = [];
+
+function makeCard(p) {
+  const owned = ownedCodes().has(p.code);
+  return `
+    <div class="product-card" id="card-${p.code}">
+      <span class="new-badge">NEW</span>
+      <a href="https://akizukidenshi.com/catalog/g/g${p.code}/" target="_blank"
+         class="img-wrap" id="iw-${p.code}">
+        <img id="img-${p.code}" alt="${p.name}">
+        <div class="img-fallback">⚙️<small>${p.code}</small></div>
+      </a>
+      <div class="product-code">販売コード: ${p.code}</div>
+      <a class="product-name" href="https://akizukidenshi.com/catalog/g/g${p.code}/" target="_blank">${p.name}</a>
+      ${p.model ? `<div class="product-model">型番: ${p.model}</div>` : ""}
+      <div class="product-footer">
+        <div class="product-price">${fmtPrice(p.price)}<span class="unit">(税込)/${p.unit}</span></div>
+        <span class="stock-badge ${stockCls(p.stock)}">${stockLabel(p.stock)}</span>
+      </div>
+      <button class="btn-purchase ${owned ? "owned" : ""}"
+              onclick="openModal('${p.code}')">
+        ${owned ? "✓ 購入済み（追加登録）" : "＋ 購入記録を追加"}
+      </button>
+    </div>`;
+}
+
+// ================================================================
+//  メイン取得
+// ================================================================
+async function fetchProducts() {
+  const btn   = document.getElementById("refresh-btn");
+  const info  = document.getElementById("status-info");
+  const errEl = document.getElementById("err-bar");
+  btn.disabled = true; btn.textContent = "取得中...";
+  errEl.style.display = "none";
+  renderSkeleton();
+
+  let products, isLive = false;
+  try {
+    const scraped = await fetchAndParse();
+    if (scraped.length >= 5) { products = scraped; isLive = true; }
+    else throw new Error("件数不足");
+  } catch (e) {
+    products = STATIC;
+    errEl.textContent = `⚠ ライブ取得に失敗しました（${e.message}）。キャッシュデータを表示中。`;
+    errEl.style.display = "block";
+  }
+
+  currentItems = products;
+  document.getElementById("products-grid").innerHTML =
+    products.slice(0, 10).map(makeCard).join("");
+
+  // 画像を非同期ロード
+  products.slice(0, 10).forEach(p => {
+    const imgEl  = document.getElementById("img-" + p.code);
+    const wrapEl = document.getElementById("iw-"  + p.code);
+    if (imgEl && wrapEl) tryImage(imgEl, wrapEl, IMG_PATTERNS(p.code));
+  });
+
+  const now = new Date().toLocaleString("ja-JP");
+  info.innerHTML = `<strong>${products.length}</strong>件 ｜ ${now}　` +
+    (isLive
+      ? `<span style="color:var(--green);font-weight:bold">● ライブ</span>`
+      : `<span style="color:var(--amber)">● キャッシュ</span>`);
+
+  btn.disabled = false; btn.textContent = "↺ 最新情報を取得";
+}
+
+// ================================================================
+//  購入管理テーブル描画
+// ================================================================
+function renderTable() {
+  const keyword = document.getElementById("filter-keyword").value.trim().toLowerCase();
+  const sort    = document.getElementById("sort-select").value;
+  let list      = loadPurchases();
+
+  if (keyword) {
+    list = list.filter(p =>
+      (p.name  || "").toLowerCase().includes(keyword) ||
+      (p.code  || "").includes(keyword) ||
+      (p.memo  || "").toLowerCase().includes(keyword));
+  }
+
+  list.sort((a, b) => {
+    if (sort === "date-desc") return (b.date||"") > (a.date||"") ? 1 : -1;
+    if (sort === "date-asc")  return (a.date||"") > (b.date||"") ? 1 : -1;
+    if (sort === "price-desc") return ((b.price||0)*(b.qty||1)) - ((a.price||0)*(a.qty||1));
+    if (sort === "name-asc")  return (a.name||"").localeCompare(b.name||"", "ja");
+    return 0;
+  });
+
+  const total = list.reduce((s, p) => s + (p.price||0)*(p.qty||1), 0);
+  const allList = loadPurchases();
+
+  const wrap = document.getElementById("table-wrap");
+  if (allList.length === 0) {
+    wrap.innerHTML = `<div class="no-data">
+      <div style="font-size:36px;margin-bottom:10px">📭</div>
+      購入記録がありません。<br>
+      新入荷タブの「＋ 購入記録を追加」ボタンか、右上の「＋ 手動で追加」から登録してください。
+    </div>`;
+    return;
+  }
+  if (list.length === 0) {
+    wrap.innerHTML = `<div class="no-data">絞り込み結果が0件です。</div>`;
+    return;
+  }
+
+  wrap.innerHTML = `
+    <div style="overflow-x:auto">
+      <table class="purchase-table">
+        <thead>
+          <tr>
+            <th>販売コード</th>
+            <th>商品名</th>
+            <th>購入日</th>
+            <th class="c-num">数量</th>
+            <th class="c-num">単価</th>
+            <th class="c-num">小計</th>
+            <th>メモ</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${list.map(p => `
+            <tr>
+              <td class="c-code">
+                <a href="https://akizukidenshi.com/catalog/g/g${p.code}/" target="_blank"
+                   style="color:var(--link)">${p.code || "—"}</a>
+              </td>
+              <td>${p.name || "—"}</td>
+              <td style="white-space:nowrap">${p.date || "—"}</td>
+              <td class="c-num">${p.qty || 1}</td>
+              <td class="c-num">${fmtPrice(p.price)}</td>
+              <td class="c-red">${fmtPrice((p.price||0)*(p.qty||1))}</td>
+              <td style="max-width:180px;word-break:break-all">${p.memo || ""}</td>
+              <td><button class="del-btn" onclick="delConfirm('${p.id}')">削除</button></td>
+            </tr>`).join("")}
+        </tbody>
+      </table>
+    </div>
+    <div class="total-bar">
+      <span>${keyword ? `絞り込み結果` : `全${allList.length}件`} 合計:</span>
+      <strong>${fmtPrice(total)}</strong>
+    </div>`;
+}
+
+function delConfirm(id) {
+  if (!confirm("この購入記録を削除しますか？")) return;
+  deletePurchase(id);
+  renderTable();
+  // カードのボタン状態も更新
+  refreshCardButtons();
+}
+
+function refreshCardButtons() {
+  const owned = ownedCodes();
+  document.querySelectorAll(".product-card").forEach(card => {
+    const code = card.id.replace("card-", "");
+    const btn  = card.querySelector(".btn-purchase");
+    if (!btn) return;
+    if (owned.has(code)) {
+      btn.classList.add("owned");
+      btn.textContent = "✓ 購入済み（追加登録）";
+    } else {
+      btn.classList.remove("owned");
+      btn.textContent = "＋ 購入記録を追加";
+    }
+  });
+}
+
+// ================================================================
+//  CSV エクスポート
+// ================================================================
+function exportCSV() {
+  const list = loadPurchases();
+  if (!list.length) { alert("購入記録がありません。"); return; }
+  const header = ["販売コード","商品名","購入日","数量","単価(円)","小計(円)","メモ"];
+  const rows   = list.map(p => [
+    p.code||"", p.name||"", p.date||"",
+    p.qty||1, p.price||0,
+    (p.price||0)*(p.qty||1),
+    (p.memo||"").replace(/"/g,'""')
+  ].map(v => `"${v}"`).join(","));
+  const csv  = "\uFEFF" + [header.join(","), ...rows].join("\r\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const a    = Object.assign(document.createElement("a"), {
+    href: URL.createObjectURL(blob),
+    download: `akizuki_purchases_${new Date().toISOString().slice(0,10)}.csv`
+  });
+  a.click();
+}
+
+// ================================================================
+//  モーダル
+// ================================================================
+let editingCode = null; // null=手動追加, code=カードから
+
+function openModal(code) {
+  editingCode = code || null;
+  const item  = currentItems.find(p => p.code === code) || {};
+  document.getElementById("modal-title").textContent = "購入記録を追加";
+  document.getElementById("m-name").value  = item.name  || "";
+  document.getElementById("m-name").readOnly = !!code;
+  document.getElementById("m-name").style.background = code ? "#f8f8f8" : "";
+  document.getElementById("m-code").value  = code || "";
+  document.getElementById("m-code").readOnly = !!code;
+  document.getElementById("m-code").style.background = code ? "#f8f8f8" : "";
+  document.getElementById("m-date").value  = new Date().toISOString().slice(0, 10);
+  document.getElementById("m-qty").value   = 1;
+  document.getElementById("m-price").value = item.price || "";
+  document.getElementById("m-memo").value  = "";
+  document.getElementById("modal-bg").classList.add("open");
+  document.getElementById("m-date").focus();
+}
+
+function openAddManual() { openModal(null); }
+
+function closeModal() {
+  document.getElementById("modal-bg").classList.remove("open");
+}
+
+function bgClick(e) { if (e.target === e.currentTarget) closeModal(); }
+
+function saveModal() {
+  const name  = document.getElementById("m-name").value.trim();
+  const code  = document.getElementById("m-code").value.trim();
+  const date  = document.getElementById("m-date").value;
+  const qty   = parseInt(document.getElementById("m-qty").value)   || 1;
+  const price = parseInt(document.getElementById("m-price").value) || 0;
+  const memo  = document.getElementById("m-memo").value.trim();
+
+  if (!name) { alert("商品名を入力してください。"); document.getElementById("m-name").focus(); return; }
+
+  addPurchase({ code, name, date, qty, price, memo });
+  closeModal();
+  refreshCardButtons();
+  // 管理タブが開いていれば即反映
+  if (document.getElementById("pane-mgmt").classList.contains("active")) renderTable();
+}
+
+// ================================================================
+//  初期化
+// ================================================================
+updateMgmtCount();
+fetchProducts();
+</script>
+</body>
+</html>
